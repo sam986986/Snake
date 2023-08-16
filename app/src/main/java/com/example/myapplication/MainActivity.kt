@@ -17,15 +17,15 @@ import com.example.myapplication.CheckeredType.*
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var tail: Pair<Int, Int>
     private val speed = 500L //移動速度
+    private val length = 15 //方格寬高長度
     private var head = Pair(0, 0)
+    private var tail = Pair(0, 0)
     private var height = 0
     private var width = 0
-    private val length = 11 //方格寬高長度
-    private var start = false
     private var direction = CENTER //移動方向
     private var spaceSize = 0 //空白方格數量
+    private var start = false
     private var isMove = false
     private val location = mutableMapOf<Pair<Int, Int>, Checkered>()
 
@@ -33,15 +33,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        height = intent.getIntExtra("height", 0)
-        width = intent.getIntExtra("width", 0)
+        height = intent.getIntExtra("height", 0) //螢幕高度
+        width = intent.getIntExtra("width", 0) //螢幕寬度
         spaceSize = length * length - 2
         initView()
     }
 
     private fun initView() {
         binding.apply {
-            repeat(length) { y ->
+            repeat(length) { y -> //開始建立方格
                 val linearLayout = LinearLayout(applicationContext)
                 val linearLayoutParams =
                     LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
@@ -49,17 +49,13 @@ class MainActivity : AppCompatActivity() {
                 linearLayout.layoutParams = linearLayoutParams
                 repeat(length) { x ->
                     val view = View(applicationContext)
-                    val layoutParams = LayoutParams(
-                        width / length - 1,
-                        width / length - 1
-                    )
-
-                    layoutParams.setMargins(1, 1, 1, 1)
+                    val layoutParams = LayoutParams(width / length - 2, width / length - 2)
+                    layoutParams.setMargins(1, 1, 1, 1) //底層背景為黑色，所以設定Margins會有邊線效果
                     view.layoutParams = layoutParams
                     view.background =
                         AppCompatResources.getDrawable(this@MainActivity, SPACE.color)
                     linearLayout.addView(view)
-                    location[Pair(x, y)] = Checkered(view, SPACE, CENTER)
+                    location[Pair(x, y)] = Checkered(view, SPACE, CENTER) // 將方格存入map
                 }
                 linearlayout.addView(linearLayout)
             }
@@ -71,15 +67,15 @@ class MainActivity : AppCompatActivity() {
             addFood()
 
             top.setOnClickListener {
-                if (direction != DOWN && !isMove) {
+                if (direction != DOWN && !isMove) { //只能往前或左右，不能回頭
                     direction = TOP
-                    isMove = true
+                    isMove = true // 不可改變移動方向，需移動完才能再次改變方向
                 }
                 if (!start) {
                     start()
                 }
             }
-            down.setOnClickListener {
+            down.setOnClickListener {//同上
                 if (direction != TOP && !isMove) {
                     direction = DOWN
                     isMove = true
@@ -88,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                     start()
                 }
             }
-            left.setOnClickListener {
+            left.setOnClickListener {//同上
                 if (direction != RIGHT && !isMove) {
                     direction = LEFT
                     isMove = true
@@ -98,7 +94,7 @@ class MainActivity : AppCompatActivity() {
                     start()
                 }
             }
-            right.setOnClickListener {
+            right.setOnClickListener {//同上
                 if (direction != LEFT && !isMove) {
                     direction = RIGHT
                     isMove = true
@@ -110,25 +106,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun start() {
+    private fun start() { // 開始移動
         start = true
         val handler = Handler(Looper.getMainLooper())
 
         handler.postDelayed(object : Runnable {
             override fun run() {
-                changeCheckered(head, BODY, direction)
-                when (direction) {
+                changeCheckered(head, BODY, direction) // 頭原本的位置改為身體
+                when (direction) { // 變更頭的座標
                     TOP -> head = Pair(head.first, head.second - 1)
                     DOWN -> head = Pair(head.first, head.second + 1)
                     LEFT -> head = Pair(head.first - 1, head.second)
                     RIGHT -> head = Pair(head.first + 1, head.second)
                     else -> {}
                 }
-                if (checkHead()) {
-                    changeCheckered(head, HEAD, direction)
-                    isMove = false
+                if (checkHead()) { //判斷是否撞到障礙物
+                    changeCheckered(head, HEAD, direction) //實際變更頭的位置
+                    isMove = false // 可以開始改變移動方向
                     handler.postDelayed(this, speed)
-                } else {
+                } else { //輸了
                     val intent = Intent(this@MainActivity, StartupActivity::class.java)
                     startActivity(intent)
                     finish()
@@ -147,8 +143,11 @@ class MainActivity : AppCompatActivity() {
         if (checkered != null) {
             checkered.type = type
             checkered.view.background =
-                AppCompatResources.getDrawable(this@MainActivity, checkered.type.color)
-            if (direction != null) {
+                AppCompatResources.getDrawable(
+                    this@MainActivity,
+                    checkered.type.color
+                ) // 依照格子型態變更顏色
+            if (direction != null) { // 參數有帶入的話變更方向
                 checkered.direction = direction
             }
         }
@@ -185,7 +184,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun addFood() { // 新增食物
         if (spaceSize > 0) {
-            var rd = (1..spaceSize).random()
+            var rd = (1..spaceSize).random() //隨機位置新增食物
             location.forEach { (pair, checkered) ->
                 if (checkered.type == SPACE && rd == 1) {
                     changeCheckered(pair, FOOD)
@@ -199,12 +198,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkHead(): Boolean { //判斷head是否碰到食物，身體或者牆壁，碰到身體跟牆壁時判斷輸
-        val checkered = location[head] ?: return false
+        val checkered = location[head] ?: return false //為空的時候代表碰到牆壁，回傳false
         when (checkered.type) {
-            FOOD -> { //碰到食物時增加長度，並新增食物
-                addFood()
-            }
-
+            FOOD -> addFood() //碰到食物時增加長度，並新增食物
             BODY -> {
                 if (head == tail) {
                     changeTail()
@@ -213,9 +209,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            else -> { //改變尾巴位置
-                changeTail()
-            }
+            else -> changeTail() //改變尾巴位置
         }
         return true
     }
