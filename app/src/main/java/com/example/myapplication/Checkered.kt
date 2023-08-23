@@ -9,10 +9,10 @@ data class Checkered(
 )
 
 enum class CheckeredType(val color: Int) {
-    SPACE(R.color.sakura),
+    SPACE(R.color.byakuroku),
     BODY(R.color.ake),
     HEAD(R.color.red),
-    FOOD(R.color.purple_200)
+    FOOD(R.color.kohbai)
 }
 
 enum class Direction {

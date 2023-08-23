@@ -25,9 +25,11 @@ class StartupActivity : AppCompatActivity() {
                 val intent = Intent(this@StartupActivity, MainActivity::class.java)
                 intent.putExtra("height", height)
                 intent.putExtra("width", width)
+                intent.putExtra("mapSize",mapSize.text.toString())
+                intent.putExtra("speed",speed.text.toString())
+
 
                 startActivity(intent)
-                finish()
             }
         }
     }

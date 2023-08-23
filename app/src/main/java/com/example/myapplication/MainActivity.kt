@@ -6,8 +6,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.OnBackPressedDispatcher
 import androidx.appcompat.content.res.AppCompatResources
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.Direction.*
@@ -17,8 +20,13 @@ import com.example.myapplication.CheckeredType.*
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val speed = 500L //移動速度
-    private val length = 15 //方格寬高長度
+    private val callback = object : OnBackPressedCallback(true){
+        override fun handleOnBackPressed() {
+            // 返回鍵
+        }
+    }
+    private var speed = 500L //移動速度
+    private var length = 15 //方格寬高長度
     private var head = Pair(0, 0)
     private var tail = Pair(0, 0)
     private var height = 0
@@ -33,11 +41,27 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        onBackPressedDispatcher.addCallback(this,callback)
+
         height = intent.getIntExtra("height", 0) //螢幕高度
         width = intent.getIntExtra("width", 0) //螢幕寬度
+        length = when (intent.getStringExtra("mapSize")) { //地圖大小
+            "大" -> 21
+            "中" -> 15
+            "小" -> 9
+            else -> 15
+        }
+        speed = when (intent.getStringExtra("speed")) {
+            "慢" -> 1000
+            "中" -> 500
+            "快" -> 200
+            "極快" -> 100
+            else -> 500
+        }
         spaceSize = length * length - 2
         initView()
     }
+
 
     private fun initView() {
         binding.apply {
@@ -45,12 +69,14 @@ class MainActivity : AppCompatActivity() {
                 val linearLayout = LinearLayout(applicationContext)
                 val linearLayoutParams =
                     LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+                linearLayoutParams.gravity = Gravity.CENTER_HORIZONTAL
                 linearLayout.orientation = LinearLayout.HORIZONTAL
                 linearLayout.layoutParams = linearLayoutParams
                 repeat(length) { x ->
                     val view = View(applicationContext)
-                    val layoutParams = LayoutParams(width / length - 2, width / length - 2)
+                    val layoutParams = LinearLayout.LayoutParams(width / length - 2, width / length - 2)
                     layoutParams.setMargins(1, 1, 1, 1) //底層背景為黑色，所以設定Margins會有邊線效果
+                    layoutParams.weight = 1f
                     view.layoutParams = layoutParams
                     view.background =
                         AppCompatResources.getDrawable(this@MainActivity, SPACE.color)
@@ -59,6 +85,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 linearlayout.addView(linearLayout)
             }
+            linearlayout.setPadding(0,1,0,1)
             head = Pair(length / 2, length / 2)
             tail = Pair(length / 2, length / 2 + 1)
             changeCheckered(head, HEAD, TOP) // 建立蛇頭
@@ -72,7 +99,7 @@ class MainActivity : AppCompatActivity() {
                     isMove = true // 不可改變移動方向，需移動完才能再次改變方向
                 }
                 if (!start) {
-                    start()
+                    startMove()
                 }
             }
             down.setOnClickListener {//同上
@@ -81,7 +108,7 @@ class MainActivity : AppCompatActivity() {
                     isMove = true
                 }
                 if (!start) {
-                    start()
+                    startMove()
                 }
             }
             left.setOnClickListener {//同上
@@ -91,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 
                 }
                 if (!start) {
-                    start()
+                    startMove()
                 }
             }
             right.setOnClickListener {//同上
@@ -100,13 +127,13 @@ class MainActivity : AppCompatActivity() {
                     isMove = true
                 }
                 if (!start) {
-                    start()
+                    startMove()
                 }
             }
         }
     }
 
-    private fun start() { // 開始移動
+    private fun startMove() { // 開始移動
         start = true
         val handler = Handler(Looper.getMainLooper())
 
@@ -125,8 +152,6 @@ class MainActivity : AppCompatActivity() {
                     isMove = false // 可以開始改變移動方向
                     handler.postDelayed(this, speed)
                 } else { //輸了
-                    val intent = Intent(this@MainActivity, StartupActivity::class.java)
-                    startActivity(intent)
                     finish()
                 }
             }
