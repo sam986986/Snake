@@ -1,91 +1,88 @@
 package com.example.myapplication
 
 import android.app.ActionBar.LayoutParams
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.OnBackPressedDispatcher
 import androidx.appcompat.content.res.AppCompatResources
-import com.example.myapplication.databinding.ActivityMainBinding
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
+import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.Direction.*
 import com.example.myapplication.CheckeredType.*
+import com.example.myapplication.databinding.FragmentSnakeBinding
 
 
-class MainActivity : AppCompatActivity() {
+class SnakeFragment : Fragment() {
 
-    private lateinit var binding: ActivityMainBinding
-    private val callback = object : OnBackPressedCallback(true){
-        override fun handleOnBackPressed() {
-            // 返回鍵
-        }
-    }
-    private var speed = 500L //移動速度
-    private var length = 15 //方格寬高長度
+    private lateinit var binding: FragmentSnakeBinding
+    private lateinit var viewModel: SnakeViewModel
+
+    private var snakeData = SnakeData()
     private var head = Pair(0, 0)
     private var tail = Pair(0, 0)
-    private var height = 0
-    private var width = 0
     private var direction = CENTER //移動方向
     private var spaceSize = 0 //空白方格數量
     private var start = false
     private var isMove = false
     private val location = mutableMapOf<Pair<Int, Int>, Checkered>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        onBackPressedDispatcher.addCallback(this,callback)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View {
+        binding = FragmentSnakeBinding.inflate(inflater)
+        return binding.root
+    }
 
-        height = intent.getIntExtra("height", 0) //螢幕高度
-        width = intent.getIntExtra("width", 0) //螢幕寬度
-        length = when (intent.getStringExtra("mapSize")) { //地圖大小
-            "大" -> 21
-            "中" -> 15
-            "小" -> 9
-            else -> 15
-        }
-        speed = when (intent.getStringExtra("speed")) {
-            "慢" -> 1000
-            "中" -> 500
-            "快" -> 200
-            "極快" -> 100
-            else -> 500
-        }
-        spaceSize = length * length - 2
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel = ViewModelProvider(requireActivity())[SnakeViewModel::class.java]
+        snakeData = viewModel.getSnakeData()
         initView()
     }
 
 
     private fun initView() {
         binding.apply {
+            val length = when (snakeData.length) {
+                "大" -> 21
+                "中" -> 15
+                "小" -> 9
+                else -> 15
+            }
+            spaceSize = length * length - 2
+
             repeat(length) { y -> //開始建立方格
-                val linearLayout = LinearLayout(applicationContext)
+                val linearLayout = LinearLayout(context)
                 val linearLayoutParams =
                     LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
                 linearLayoutParams.gravity = Gravity.CENTER_HORIZONTAL
                 linearLayout.orientation = LinearLayout.HORIZONTAL
                 linearLayout.layoutParams = linearLayoutParams
                 repeat(length) { x ->
-                    val view = View(applicationContext)
-                    val layoutParams = LinearLayout.LayoutParams(width / length - 2, width / length - 2)
+                    val view = View(context)
+                    val layoutParams = LinearLayout.LayoutParams(
+                        snakeData.width / length - 2,
+                        snakeData.width / length - 2
+                    )
                     layoutParams.setMargins(1, 1, 1, 1) //底層背景為黑色，所以設定Margins會有邊線效果
                     layoutParams.weight = 1f
                     view.layoutParams = layoutParams
                     view.background =
-                        AppCompatResources.getDrawable(this@MainActivity, SPACE.color)
+                        AppCompatResources.getDrawable(requireContext(), SPACE.color)
                     linearLayout.addView(view)
                     location[Pair(x, y)] = Checkered(view, SPACE, CENTER) // 將方格存入map
                 }
                 linearlayout.addView(linearLayout)
             }
-            linearlayout.setPadding(0,1,0,1)
+            linearlayout.setPadding(0, 1, 0, 1)
             head = Pair(length / 2, length / 2)
             tail = Pair(length / 2, length / 2 + 1)
             changeCheckered(head, HEAD, TOP) // 建立蛇頭
@@ -136,7 +133,13 @@ class MainActivity : AppCompatActivity() {
     private fun startMove() { // 開始移動
         start = true
         val handler = Handler(Looper.getMainLooper())
-
+        val speed: Long = when (viewModel.getSnakeData().speed) { //移动速度
+            "慢" -> 1000
+            "中" -> 500
+            "快" -> 200
+            "極快" -> 100
+            else -> 500
+        }
         handler.postDelayed(object : Runnable {
             override fun run() {
                 changeCheckered(head, BODY, direction) // 頭原本的位置改為身體
@@ -152,7 +155,10 @@ class MainActivity : AppCompatActivity() {
                     isMove = false // 可以開始改變移動方向
                     handler.postDelayed(this, speed)
                 } else { //輸了
-                    finish()
+                    requireActivity().supportFragmentManager.commit {
+                        setReorderingAllowed(true)
+                        replace(R.id.fragmentContainerView, StartupFragment())
+                    }
                 }
             }
         }, speed)
@@ -169,7 +175,7 @@ class MainActivity : AppCompatActivity() {
             checkered.type = type
             checkered.view.background =
                 AppCompatResources.getDrawable(
-                    this@MainActivity,
+                    requireContext(),
                     checkered.type.color
                 ) // 依照格子型態變更顏色
             if (direction != null) { // 參數有帶入的話變更方向
