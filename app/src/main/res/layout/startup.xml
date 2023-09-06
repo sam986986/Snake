@@ -5,15 +5,15 @@
     android:id="@+id/constrintlayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/byakuroku">
+    android:background="?attr/mainColor">
 
     <Button
         android:id="@+id/button"
         style="@style/Widget.Material3.ExtendedFloatingActionButton.Icon.Secondary"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
-        android:backgroundTint="@color/mizuasagi"
-        android:text="Start"
+        android:backgroundTint="?attr/buttonColor"
+        android:text="@string/start"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,45 +41,58 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
-        android:hint="MapSize"
-        android:labelFor="@+id/mapSize"
+        android:hint="@string/mapSize"
+        android:labelFor="@+id/map_size"
         app:layout_constraintBottom_toTopOf="@+id/button"
         app:layout_constraintEnd_toStartOf="@+id/guideline"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guideline2">
 
-        <AutoCompleteTextView
-            android:id="@+id/mapSize"
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+            android:id="@+id/map_size"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:inputType="none"
             android:padding="10dp"
-            app:simpleItems="@array/map_size"
-            tools:ignore="LabelFor" />
+            android:saveEnabled="false"
+            tools:ignore="SpeakableTextPresentCheck"
+            />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
-        android:hint="Speed"
+        android:hint="@string/speed"
         android:labelFor="@+id/speed"
         app:layout_constraintBottom_toTopOf="@+id/button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toTopOf="@+id/guideline2">
 
-        <AutoCompleteTextView
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/speed"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:inputType="none"
             android:padding="10dp"
-            app:simpleItems="@array/speed"
-            tools:ignore="LabelFor" />
+            android:saveEnabled="false"
+            tools:ignore="SpeakableTextPresentCheck" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/keyboard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/keyboard_show"
+        app:layout_constraintBottom_toTopOf="@+id/textInputLayout"
+        app:layout_constraintEnd_toEndOf="@+id/textInputLayout"
+        app:layout_constraintStart_toStartOf="@+id/textInputLayout"
+        app:layout_constraintTop_toTopOf="@+id/guideline2"
+        app:thumbTint="?attr/buttonColor" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

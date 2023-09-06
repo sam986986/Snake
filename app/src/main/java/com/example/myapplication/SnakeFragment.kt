@@ -1,34 +1,42 @@
 package com.example.myapplication
 
+import android.annotation.SuppressLint
 import android.app.ActionBar.LayoutParams
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
-import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.Direction.*
 import com.example.myapplication.CheckeredType.*
 import com.example.myapplication.databinding.FragmentSnakeBinding
+import kotlin.math.abs
 
 
 class SnakeFragment : Fragment() {
 
     private lateinit var binding: FragmentSnakeBinding
-    private lateinit var viewModel: SnakeViewModel
-
+    private lateinit var moveRunnable: Runnable
+    private var speed = 500L
+    private val viewModel: SnakeViewModel by activityViewModels()
+    private val handler = Handler(Looper.getMainLooper())
+    private var downX = 0f
+    private var downY = 0f
     private var snakeData = SnakeData()
     private var head = Pair(0, 0)
     private var tail = Pair(0, 0)
     private var direction = CENTER //移動方向
     private var spaceSize = 0 //空白方格數量
-    private var start = false
     private var isMove = false
     private val location = mutableMapOf<Pair<Int, Int>, Checkered>()
 
@@ -43,13 +51,16 @@ class SnakeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[SnakeViewModel::class.java]
-        snakeData = viewModel.getSnakeData()
+        snakeData = viewModel.snakeData
+        setOnTouchListener() // 設定滑動事件
         initView()
     }
 
 
     private fun initView() {
+        viewModel.setShowStop(true)
+        viewModel.setShowChangeTheme(false)
+        setMove()
         binding.apply {
             val length = when (snakeData.length) {
                 "大" -> 21
@@ -75,10 +86,11 @@ class SnakeFragment : Fragment() {
                     layoutParams.setMargins(1, 1, 1, 1) //底層背景為黑色，所以設定Margins會有邊線效果
                     layoutParams.weight = 1f
                     view.layoutParams = layoutParams
-                    view.background =
-                        AppCompatResources.getDrawable(requireContext(), SPACE.color)
+                    val typedValue = TypedValue()
+                    requireContext().theme.resolveAttribute(R.attr.mainColor, typedValue, true)
+                    view.setBackgroundResource(typedValue.resourceId)
                     linearLayout.addView(view)
-                    location[Pair(x, y)] = Checkered(view, SPACE, CENTER) // 將方格存入map
+                    location[x to y] = Checkered(view, SPACE, CENTER) // 將方格存入map
                 }
                 linearlayout.addView(linearLayout)
             }
@@ -90,57 +102,93 @@ class SnakeFragment : Fragment() {
             direction = TOP
             addFood()
 
+            val showKeyboard = viewModel.keyboard
+            top.isVisible = showKeyboard
+            down.isVisible = showKeyboard
+            left.isVisible = showKeyboard
+            right.isVisible = showKeyboard
             top.setOnClickListener {
                 if (direction != DOWN && !isMove) { //只能往前或左右，不能回頭
                     direction = TOP
                     isMove = true // 不可改變移動方向，需移動完才能再次改變方向
                 }
-                if (!start) {
-                    startMove()
-                }
+                viewModel.setStart(true)
             }
             down.setOnClickListener {//同上
                 if (direction != TOP && !isMove) {
                     direction = DOWN
                     isMove = true
                 }
-                if (!start) {
-                    startMove()
-                }
+                viewModel.setStart(true)
             }
             left.setOnClickListener {//同上
                 if (direction != RIGHT && !isMove) {
                     direction = LEFT
                     isMove = true
-
                 }
-                if (!start) {
-                    startMove()
-                }
+                viewModel.setStart(true)
             }
             right.setOnClickListener {//同上
                 if (direction != LEFT && !isMove) {
                     direction = RIGHT
                     isMove = true
                 }
-                if (!start) {
+                viewModel.setStart(true)
+            }
+            viewModel.start.observe(viewLifecycleOwner){start->
+                if (start){
                     startMove()
+                } else if (this@SnakeFragment::moveRunnable.isInitialized){
+                    handler.removeCallbacks(moveRunnable)  //暫停
                 }
             }
         }
     }
 
-    private fun startMove() { // 開始移動
-        start = true
-        val handler = Handler(Looper.getMainLooper())
-        val speed: Long = when (viewModel.getSnakeData().speed) { //移动速度
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setOnTouchListener() {
+        binding.root.setOnTouchListener { _, event ->
+
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = event.x
+                    downY = event.y
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    val x = abs(event.x - downX)
+                    val y = abs(event.y - downY)
+                    if (x > y) {
+                        if (event.x - downX > 30) {
+                            binding.right.callOnClick() //往右滑動
+                        }
+                        if (downX - event.x > 30) {
+                            binding.left.callOnClick() //往左滑動
+                        }
+                    } else {
+                        if (event.y - downY > 30) {
+                            binding.down.callOnClick() //往下滑動
+                        }
+                        if (downY - event.y > 30) {
+                            binding.top.callOnClick() //往上滑動
+                        }
+                    }
+                }
+            }
+            true
+        }
+    }
+    private fun setMove(){
+
+        speed = when (viewModel.snakeData.speed) { //移动速度
             "慢" -> 1000
             "中" -> 500
             "快" -> 200
             "極快" -> 100
             else -> 500
         }
-        handler.postDelayed(object : Runnable {
+
+        moveRunnable = object : Runnable {
             override fun run() {
                 changeCheckered(head, BODY, direction) // 頭原本的位置改為身體
                 when (direction) { // 變更頭的座標
@@ -155,13 +203,18 @@ class SnakeFragment : Fragment() {
                     isMove = false // 可以開始改變移動方向
                     handler.postDelayed(this, speed)
                 } else { //輸了
-                    requireActivity().supportFragmentManager.commit {
+                    viewModel.setStart(false)
+                    parentFragmentManager.commit {
                         setReorderingAllowed(true)
+                        remove(this@SnakeFragment)
                         replace(R.id.fragmentContainerView, StartupFragment())
                     }
                 }
             }
-        }, speed)
+        }
+    }
+    private fun startMove() { // 開始移動
+        handler.postDelayed(moveRunnable, speed)
     }
 
     private fun changeCheckered(
@@ -173,11 +226,18 @@ class SnakeFragment : Fragment() {
         val checkered = location[pair]
         if (checkered != null) {
             checkered.type = type
-            checkered.view.background =
-                AppCompatResources.getDrawable(
-                    requireContext(),
-                    checkered.type.color
-                ) // 依照格子型態變更顏色
+
+            if (type == SPACE) {
+                val typedValue = TypedValue()
+                requireContext().theme.resolveAttribute(R.attr.mainColor, typedValue, true)
+                checkered.view.setBackgroundResource(typedValue.resourceId)
+            } else {
+                checkered.view.background =
+                    AppCompatResources.getDrawable(
+                        requireContext(),
+                        checkered.type.color
+                    ) // 依照格子型態變更顏色
+            }
             if (direction != null) { // 參數有帶入的話變更方向
                 checkered.direction = direction
             }
@@ -245,3 +305,6 @@ class SnakeFragment : Fragment() {
         return true
     }
 }
+//            val t = TypedValue()
+//            requireContext().theme.resolveAttribute(R.attr.buttonColor,t,true)
+//            view.setBackgroundResource(t.resourceId)

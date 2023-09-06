@@ -5,19 +5,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
-import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.databinding.StartupBinding
-import com.google.android.material.textfield.MaterialAutoCompleteTextView
 
 class StartupFragment : Fragment() {
 
     private lateinit var binding: StartupBinding
-    private lateinit var viewModel: SnakeViewModel
+    private val viewModel: SnakeViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[SnakeViewModel::class.java]
         initView()
     }
 
@@ -32,24 +30,28 @@ class StartupFragment : Fragment() {
 
     private fun initView() {
         binding.apply {
+            keyboard.isChecked = viewModel.keyboard
 
-            val mapSizeArray = resources.getStringArray(R.array.map_size)
-            val speedArray = resources.getStringArray(R.array.speed)
-            mapSize.setText(viewModel.getSnakeData().length) // 預設文字
-            speed.setText(viewModel.getSnakeData().speed)
-            (binding.mapSize as MaterialAutoCompleteTextView).setSimpleItems(mapSizeArray) // 設定下拉選單
-            (binding.speed as MaterialAutoCompleteTextView).setSimpleItems(speedArray)
+            mapSize.setText(viewModel.snakeData.length) // 預設文字
+            speed.setText(viewModel.snakeData.speed)
+
+            mapSize.setSimpleItems(resources.getStringArray(R.array.map_size)) // 設定下拉選單
+            speed.setSimpleItems(resources.getStringArray(R.array.speed))
+            viewModel.setShowStop(false)
+            viewModel.setShowChangeTheme(true)
 
             button.setOnClickListener {
-                viewModel.setSnakeData(setSnakeData())
-                requireActivity().supportFragmentManager.commit {
+                viewModel.snakeData = setSnakeData()
+                viewModel.keyboard = keyboard.isChecked
+                parentFragmentManager.commit {
                     replace(R.id.fragmentContainerView, SnakeFragment())
                 }
             }
+
         }
     }
 
-    private fun setSnakeData():SnakeData{
+    private fun setSnakeData(): SnakeData {
         val snakeData = SnakeData()
         binding.apply {
             snakeData.height = constrintlayout.height

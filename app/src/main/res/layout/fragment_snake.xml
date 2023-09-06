@@ -4,21 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/byakuroku"
+    android:background="?attr/mainColor"
     tools:context=".SnakeFragment">
-
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/materialToolbar2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/nae"
-        android:minHeight="?attr/actionBarSize"
-        android:theme="?attr/actionBarTheme"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@android:drawable/ic_menu_revert"
-        app:navigationIconTint="@color/white"
-        />
 
     <LinearLayout
         android:id="@+id/linearlayout"
@@ -28,14 +15,14 @@
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/materialToolbar2" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/top"
         android:layout_width="100dp"
         android:layout_height="60dp"
         android:layout_marginTop="40dp"
-        android:backgroundTint="@color/mizuasagi"
+        android:backgroundTint="?attr/buttonColor"
         android:text="↑"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -47,7 +34,7 @@
         android:id="@+id/left"
         android:layout_width="100dp"
         android:layout_height="60dp"
-        android:backgroundTint="@color/mizuasagi"
+        android:backgroundTint="?attr/buttonColor"
         android:text="←"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -58,7 +45,7 @@
         android:id="@+id/right"
         android:layout_width="100dp"
         android:layout_height="60dp"
-        android:backgroundTint="@color/mizuasagi"
+        android:backgroundTint="?attr/buttonColor"
         android:text="→"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -69,7 +56,7 @@
         android:id="@+id/down"
         android:layout_width="100dp"
         android:layout_height="60dp"
-        android:backgroundTint="@color/mizuasagi"
+        android:backgroundTint="?attr/buttonColor"
         android:text="↓"
         android:textSize="20sp"
         android:textStyle="bold"

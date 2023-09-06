@@ -4,5 +4,16 @@
         <item name="android:statusBarColor">@color/black</item> //頂部顏色黑色
     </style>
 
-    <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
+    <style name="Theme.MyApplication" parent="Base.Theme.MyApplication">
+        <item name="colorPrimary">@color/nae</item>
+        <item name="buttonColor">@color/mizuasagi</item>
+        <item name="mainColor">@color/byakuroku</item>
+    </style>
+
+    <style name="Theme.MyApplication.bule" parent="Base.Theme.MyApplication">
+        <item name="colorPrimary">@color/gunjyo</item>
+        <item name="buttonColor">@color/mizu</item>
+        <item name="mainColor">@color/kamenozoki</item>
+    </style>
+
 </resources>
