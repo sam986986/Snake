@@ -1,7 +1,14 @@
 package com.example.myapplication
 
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 class SnakeViewModel : ViewModel() {
 
@@ -23,8 +30,31 @@ class SnakeViewModel : ViewModel() {
     }
 
     fun getStart(): Boolean {
-        return start.value!!
+        return start.value ?: false
     }
 
+
+    suspend fun <T> putValue(
+        dataStore: DataStore<Preferences>,
+        content: T,
+        key: Preferences.Key<T>,
+    ) {
+        dataStore.edit { preferences ->
+            preferences[key] = content
+        }
+    }
+
+    suspend fun <T> getValue(
+        dataStore: DataStore<Preferences>,
+        key: Preferences.Key<T>,
+        back: (T) -> Unit,
+    ) {
+        dataStore.edit { preferences ->
+            val value = preferences[key]
+            if (value != null) {
+                back(value)
+            }
+        }
+    }
 
 }

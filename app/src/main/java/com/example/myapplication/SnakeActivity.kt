@@ -6,10 +6,14 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.databinding.LayoutDialogMenuBinding
 import com.example.myapplication.databinding.LayoutDialogStopBinding
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
 
@@ -21,19 +25,27 @@ class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
             // 禁用返回鍵所以留空
         }
     }
+    companion object {
+        private const val THEME = "theme"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         onBackPressedDispatcher.addCallback(this, callback)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        runBlocking {
+            viewModel.getValue(dataStore, intPreferencesKey(THEME), back = { value ->
+                viewModel.theme = value
+            })
+        }
         setTheme(viewModel.theme) //設定主題
         setContentView(binding.root)
         initView()
         if (savedInstanceState == null) {
             supportFragmentManager.commit {
                 setReorderingAllowed(true)
-                add(binding.fragmentContainerView.id, StartupFragment())
+                add(binding.fragmentContainerView.id, SnakeMainFragment())
             }
         }
     }
@@ -75,7 +87,7 @@ class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
                     dialogBinding.backHome.setOnClickListener {//返回主頁
                         supportFragmentManager.commit {
                             setReorderingAllowed(true)
-                            replace(binding.fragmentContainerView.id, StartupFragment())
+                            replace(binding.fragmentContainerView.id, SnakeMainFragment())
                             dialog.dismiss()
                         }
                     }
@@ -105,12 +117,24 @@ class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
                     dialogBinding.changeTheme.setOnCheckedChangeListener { _, checkId -> //切換主題並刷新畫面
                         when (checkId) {
                             R.id.blue_theme -> {
-                                viewModel.theme = R.style.Theme_MyApplication_bule
+                                lifecycleScope.launch {
+                                    viewModel.putValue(
+                                        dataStore,
+                                        R.style.Theme_MyApplication_bule,
+                                        intPreferencesKey(THEME)
+                                    )
+                                }
                                 recreate()
                             }
 
                             R.id.greed_theme -> {
-                                viewModel.theme = R.style.Theme_MyApplication
+                                lifecycleScope.launch {
+                                    viewModel.putValue(
+                                        dataStore,
+                                        R.style.Theme_MyApplication,
+                                        intPreferencesKey(THEME)
+                                    )
+                                }
                                 recreate()
                             }
                         }

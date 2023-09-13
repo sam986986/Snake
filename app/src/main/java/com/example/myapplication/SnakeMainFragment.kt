@@ -9,7 +9,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import com.example.myapplication.databinding.StartupBinding
 
-class StartupFragment : Fragment() {
+class SnakeMainFragment : Fragment() {
 
     private lateinit var binding: StartupBinding
     private val viewModel: SnakeViewModel by activityViewModels()

@@ -207,7 +207,7 @@ class SnakeFragment : Fragment() {
                     parentFragmentManager.commit {
                         setReorderingAllowed(true)
                         remove(this@SnakeFragment)
-                        replace(R.id.fragmentContainerView, StartupFragment())
+                        replace(R.id.fragmentContainerView, SnakeMainFragment())
                     }
                 }
             }
@@ -305,6 +305,3 @@ class SnakeFragment : Fragment() {
         return true
     }
 }
-//            val t = TypedValue()
-//            requireContext().theme.resolveAttribute(R.attr.buttonColor,t,true)
-//            view.setBackgroundResource(t.resourceId)
