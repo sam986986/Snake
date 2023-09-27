@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="?attr/mainColor">
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/button"
         style="@style/Widget.Material3.ExtendedFloatingActionButton.Icon.Secondary"
         android:layout_width="wrap_content"

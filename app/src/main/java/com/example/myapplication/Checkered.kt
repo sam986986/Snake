@@ -2,6 +2,12 @@ package com.example.myapplication
 
 import android.view.View
 
+fun Checkered?.notNull():Checkered{
+    if (this == null){
+        throw IllegalStateException("Checkered is Null.")
+    }
+    return this
+}
 data class Checkered(
     var view: View,
     var type: CheckeredType,

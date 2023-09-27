@@ -1,23 +1,23 @@
 package com.example.myapplication
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.lifecycle.ViewModel
 import com.example.myapplication.databinding.StartupBinding
 
-class SnakeMainFragment : Fragment() {
+class SnakeMainFragment : SkinBaseFragment() {
 
     private lateinit var binding: StartupBinding
     private val viewModel: SnakeViewModel by activityViewModels()
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        initView()
-    }
+    override fun viewModel(): ViewModel = viewModel
+    override fun initLayout(): View = binding.root
+    override fun context(): Context = requireContext()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,6 +28,10 @@ class SnakeMainFragment : Fragment() {
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        initView()
+    }
     private fun initView() {
         binding.apply {
             keyboard.isChecked = viewModel.keyboard
@@ -47,7 +51,6 @@ class SnakeMainFragment : Fragment() {
                     replace(R.id.fragmentContainerView, SnakeFragment())
                 }
             }
-
         }
     }
 

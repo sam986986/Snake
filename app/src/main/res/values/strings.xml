@@ -4,4 +4,11 @@
     <string name="mapSize">MapSize</string>
     <string name="speed">Speed</string>
     <string name="keyboard_show">Keyboard</string>
+    <string name="top_arrow">↑</string>
+    <string name="left_arrow">←</string>
+    <string name="right_arrow">→</string>
+    <string name="down_arrow">↓</string>
+    <string name="back_game">返回遊戲</string>
+    <string name="restart">重新開始</string>
+    <string name="back_home">回主頁</string>
 </resources>

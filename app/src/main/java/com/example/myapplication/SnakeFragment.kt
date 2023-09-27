@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import android.annotation.SuppressLint
 import android.app.ActionBar.LayoutParams
+import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -14,16 +15,16 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.lifecycle.ViewModel
 import com.example.myapplication.Direction.*
 import com.example.myapplication.CheckeredType.*
 import com.example.myapplication.databinding.FragmentSnakeBinding
 import kotlin.math.abs
 
 
-class SnakeFragment : Fragment() {
+class SnakeFragment : SkinBaseFragment() {
 
     private lateinit var binding: FragmentSnakeBinding
     private lateinit var moveRunnable: Runnable
@@ -39,6 +40,9 @@ class SnakeFragment : Fragment() {
     private var spaceSize = 0 //空白方格數量
     private var isMove = false
     private val location = mutableMapOf<Pair<Int, Int>, Checkered>()
+    override fun viewModel(): ViewModel = viewModel
+    override fun initLayout(): View = binding.root
+    override fun context(): Context = requireContext()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -135,10 +139,10 @@ class SnakeFragment : Fragment() {
                 }
                 viewModel.setStart(true)
             }
-            viewModel.start.observe(viewLifecycleOwner){start->
-                if (start){
+            viewModel.start.observe(viewLifecycleOwner) { start ->
+                if (start) {
                     startMove()
-                } else if (this@SnakeFragment::moveRunnable.isInitialized){
+                } else if (this@SnakeFragment::moveRunnable.isInitialized) {
                     handler.removeCallbacks(moveRunnable)  //暫停
                 }
             }
@@ -178,7 +182,8 @@ class SnakeFragment : Fragment() {
             true
         }
     }
-    private fun setMove(){
+
+    private fun setMove() {
 
         speed = when (viewModel.snakeData.speed) { //移动速度
             "慢" -> 1000
@@ -213,6 +218,7 @@ class SnakeFragment : Fragment() {
             }
         }
     }
+
     private fun startMove() { // 開始移動
         handler.postDelayed(moveRunnable, speed)
     }
@@ -223,53 +229,48 @@ class SnakeFragment : Fragment() {
         type: CheckeredType,
         direction: Direction? = null,
     ) {
-        val checkered = location[pair]
-        if (checkered != null) {
-            checkered.type = type
-
-            if (type == SPACE) {
-                val typedValue = TypedValue()
-                requireContext().theme.resolveAttribute(R.attr.mainColor, typedValue, true)
-                checkered.view.setBackgroundResource(typedValue.resourceId)
-            } else {
-                checkered.view.background =
-                    AppCompatResources.getDrawable(
-                        requireContext(),
-                        checkered.type.color
-                    ) // 依照格子型態變更顏色
-            }
-            if (direction != null) { // 參數有帶入的話變更方向
-                checkered.direction = direction
-            }
+        val checkered = location[pair].notNull()
+        checkered.type = type
+        if (type == SPACE) {
+            val typedValue = TypedValue()
+            requireContext().theme.resolveAttribute(R.attr.mainColor, typedValue, true)
+            checkered.view.setBackgroundResource(typedValue.resourceId)
+        } else {
+            checkered.view.background =
+                AppCompatResources.getDrawable(
+                    requireContext(),
+                    checkered.type.color
+                ) // 依照格子型態變更顏色
+        }
+        if (direction != null) { // 參數有帶入的話變更方向
+            checkered.direction = direction
         }
     }
 
     private fun changeTail() {  //更新尾巴位置
-        val checkered = location[tail]
-        if (checkered != null) {
-            when (checkered.direction) {
-                TOP -> {
-                    changeCheckered(tail, SPACE, CENTER)
-                    tail = Pair(tail.first, tail.second - 1)
-                }
-
-                DOWN -> {
-                    changeCheckered(tail, SPACE, CENTER)
-                    tail = Pair(tail.first, tail.second + 1)
-                }
-
-                LEFT -> {
-                    changeCheckered(tail, SPACE, CENTER)
-                    tail = Pair(tail.first - 1, tail.second)
-                }
-
-                RIGHT -> {
-                    changeCheckered(tail, SPACE, CENTER)
-                    tail = Pair(tail.first + 1, tail.second)
-                }
-
-                else -> {}
+        val checkered = location[tail].notNull()
+        when (checkered.direction) {
+            TOP -> {
+                changeCheckered(tail, SPACE, CENTER)
+                tail = Pair(tail.first, tail.second - 1)
             }
+
+            DOWN -> {
+                changeCheckered(tail, SPACE, CENTER)
+                tail = Pair(tail.first, tail.second + 1)
+            }
+
+            LEFT -> {
+                changeCheckered(tail, SPACE, CENTER)
+                tail = Pair(tail.first - 1, tail.second)
+            }
+
+            RIGHT -> {
+                changeCheckered(tail, SPACE, CENTER)
+                tail = Pair(tail.first + 1, tail.second)
+            }
+
+            else -> {}
         }
     }
 

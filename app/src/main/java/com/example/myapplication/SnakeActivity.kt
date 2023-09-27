@@ -2,44 +2,51 @@ package com.example.myapplication
 
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.forEach
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.fragment.app.commit
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.databinding.LayoutDialogMenuBinding
 import com.example.myapplication.databinding.LayoutDialogStopBinding
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
-class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
+class SnakeActivity : SkinBaseActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: SnakeViewModel by viewModels()
-
     private val callback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {// 返回鍵
             // 禁用返回鍵所以留空
         }
     }
+
     companion object {
         private const val THEME = "theme"
     }
 
+    override fun viewModel(): ViewModel = viewModel
+
+    override fun initLayout(): View = binding.root
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         onBackPressedDispatcher.addCallback(this, callback)
         binding = ActivityMainBinding.inflate(layoutInflater)
-        runBlocking {
+        viewModel.theme.observe(this) {
+            setStyle(it)
+        }
+        lifecycleScope.launch {
             viewModel.getValue(dataStore, intPreferencesKey(THEME), back = { value ->
-                viewModel.theme = value
+                viewModel.setTheme(value)
             })
         }
-        setTheme(viewModel.theme) //設定主題
         setContentView(binding.root)
         initView()
         if (savedInstanceState == null) {
@@ -65,7 +72,6 @@ class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
         val typedValue = TypedValue()
         theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true)
         binding.toolbar.setBackgroundResource(typedValue.resourceId) //toolbar主題顏色變更
-
         binding.toolbar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.stop -> { //暫停按鈕
@@ -107,7 +113,7 @@ class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
                         .show()
 
                     dialogBinding.changeTheme.check( //確認目前主題顏色
-                        when (viewModel.theme) {
+                        when (viewModel.getTheme()) {
                             R.style.Theme_MyApplication -> dialogBinding.greedTheme.id
                             R.style.Theme_MyApplication_bule -> dialogBinding.blueTheme.id
                             else -> dialogBinding.greedTheme.id
@@ -120,29 +126,45 @@ class SnakeActivity : AppCompatActivity(R.layout.activity_main) {
                                 lifecycleScope.launch {
                                     viewModel.putValue(
                                         dataStore,
-                                        R.style.Theme_MyApplication_bule,
-                                        intPreferencesKey(THEME)
+                                        intPreferencesKey(THEME),
+                                        R.style.Theme_MyApplication_bule
                                     )
                                 }
-                                recreate()
+                                viewModel.setTheme(R.style.Theme_MyApplication_bule)
+                                setStyle(R.style.Theme_MyApplication_bule)
                             }
 
                             R.id.greed_theme -> {
                                 lifecycleScope.launch {
                                     viewModel.putValue(
                                         dataStore,
-                                        R.style.Theme_MyApplication,
-                                        intPreferencesKey(THEME)
+                                        intPreferencesKey(THEME),
+                                        R.style.Theme_MyApplication
                                     )
                                 }
-                                recreate()
+                                viewModel.setTheme(R.style.Theme_MyApplication)
+                                setStyle(R.style.Theme_MyApplication)
                             }
                         }
                     }
                 }
             }
-
             true
+        }
+    }
+
+    private fun setStyle(theme: Int) {
+        setTheme(theme)
+        binding.root.forEach {
+            val typedValue = TypedValue()
+            if (it is Toolbar) {
+                this.theme.resolveAttribute(
+                    androidx.appcompat.R.attr.colorPrimary,
+                    typedValue,
+                    true
+                )
+                it.setBackgroundResource(typedValue.resourceId)
+            }
         }
     }
 }
